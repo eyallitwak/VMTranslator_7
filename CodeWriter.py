@@ -2,6 +2,8 @@ import os
 
 
 class CodeWriter:
+    comp_index = 0  # index to label comparison operations, since they need labeling
+
     def __init__(self, dest_file):
         """Creates a CodeWriter object, that will write to the specified file.
 
@@ -10,11 +12,20 @@ class CodeWriter:
         """
         self.file = open(dest_file, 'w')
         self.file_name = os.path.basename(self.file)
-        self.dict = {'local': 'LCL',
-                     'argument': 'ARG',
-                     'this': 'THIS',
-                     'that': 'THAT',
-                     'temp': 5, }
+        self.push_pop_dict = {'local': 'LCL',
+                              'argument': 'ARG',
+                              'this': 'THIS',
+                              'that': 'THAT',
+                              'temp': 5, }
+        self.op_dict = {'add': '+',
+                        'sub': '-',
+                        'neg': '-',
+                        'eq': 'EQ',
+                        'gt': 'GT',
+                        'lt': 'LT',
+                        'and': '&',
+                        'or': '|',
+                        'not': '!'}
 
     def write_arithmetic(self, command):
         # TODO
@@ -74,7 +85,7 @@ class CodeWriter:
     M=D
     // SP++
     @SP
-    M=M+1'''.format(seg=self.dict[segment], i=index)
+    M=M+1'''.format(seg=self.push_pop_dict[segment], i=index)
         self.file.write(lines)
 
     def pop(self, segment, index):
@@ -102,7 +113,7 @@ class CodeWriter:
     D=M
     @13
     A=M
-    M=D'''.format(seg=self.dict[segment], i=index)
+    M=D'''.format(seg=self.push_pop_dict[segment], i=index)
         self.file.write(lines)
 
     def push_static(self, index):
@@ -110,7 +121,7 @@ class CodeWriter:
 
         Args:
             index (int): The offset within the segment to push from.
-        """        
+        """
         lines = '''@{label}
     D=M
     // RAM[SP] = D
@@ -127,9 +138,54 @@ class CodeWriter:
 
         Args:
             index (int): The offset within the segment to pop into.
-        """        
+        """
         lines = '''M=M-1
     A=M
     D=M
     @{label}
     M=D'''.format(label=self.file_name.split('.')[0]+'.'+index)
+        self.file.write(lines)
+
+    def one_operand(self, op):
+        lines = '''@SP
+    M=M-1
+    A=M
+    M={}M
+    @SP
+    M=M+1'''.format(self.op_dict[op])
+
+    def two_operands(self, op):
+        lines = '''@SP
+    M=M-1
+    A=M
+    D=M
+    @SP
+    M=M-1
+    A=M
+    M=M{}D
+    @SP
+    M=M+1'''.format(self.op_dict[op])
+
+    def comparison_op(self, op):
+        lines = '''@SP
+    M=M-1
+    A=M
+    D=M
+    @SP
+    M=M-1
+    A=M
+    D=M-D
+    @TRUE{c}
+    D;J{o}
+    D=0
+    @FINISHCOMP{c}
+    0;JMP
+    (TRUE{c})
+    D=-1
+    (FINISHCOMP{c})
+    @SP
+    A=M
+    M=D
+    @SP
+    M=M+1'''.format(o=self.comp_index[op], c=CodeWriter.comp_index)
+    comp_index += 1

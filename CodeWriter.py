@@ -145,7 +145,7 @@ class CodeWriter:
         Args:
             index (int): The offset within the segment to push from.
         """
-        lines = '''@{label}
+        lines = '''    @{label}
     D=M
     // RAM[SP] = D
     @SP
@@ -168,7 +168,8 @@ class CodeWriter:
     A=M
     D=M
     @{label}
-    M=D'''.format(label=self.file_name.split('.')[0]+'.'+index)
+    M=D
+    '''.format(label=self.file_name.split('.')[0]+'.'+str(index))
         return lines
 
     def one_operand(self, op):

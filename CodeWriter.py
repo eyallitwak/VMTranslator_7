@@ -10,8 +10,9 @@ class CodeWriter:
         Args:
             dest_file (path): Path to create the output file.
         """
-        self.file = open(dest_file, 'w')
-        self.file_name = os.path.basename(self.file)
+        self.path = dest_file.split('.')[0]+'.asm'
+        self.file = open(self.path, 'w+')
+        self.file_name = os.path.basename(self.path)
         self.push_pop_dict = {'local': 'LCL',
                               'argument': 'ARG',
                               'this': 'THIS',
@@ -27,13 +28,32 @@ class CodeWriter:
                         'or': '|',
                         'not': '!'}
 
-    def write_arithmetic(self, command):
-        # TODO
+    def write_arithmetic(self, operator):
+        asm_command = ''
+        if operator == 'neg' or operator == 'not':
+            asm_command = self.one_operand(operator)
+        elif operator == 'eq' or operator == 'gt' or operator == 'lt':
+            asm_command = self.comparison_op(operator)
+        else:
+            asm_command = self.two_operands(operator)
+        self.file.write(asm_command)
         pass
 
     def write_push_pop(self, command_type, segment, index):
-        # TODO
-        pass
+        asm_command = ''
+        if command_type == 'C_PUSH':
+            if segment == 'constant':
+                asm_command = self.push_constant(index)
+            elif command_type == 'static':
+                asm_command = self.push_static(index)
+            else:
+                asm_command = self.push(segment, index)
+        else:
+            if segment == 'static':
+                asm_command = self.pop_static(index)
+            else:
+                asm_command = self.pop(segment, index)
+        self.file.write(asm_command)
 
     def comment(self, command):
         """Writes the current VM line as a comment on the output file.
@@ -60,7 +80,7 @@ class CodeWriter:
     // SP++
     @SP
     M=M+1\n'''.format(n=index)
-        self.file.write(lines)
+        return lines
 
     def push(self, segment, index):
         """Writes appropriate ASM commands that implement pushing from local, argument, this, that, temp or pointer.
@@ -86,7 +106,7 @@ class CodeWriter:
     // SP++
     @SP
     M=M+1'''.format(seg=self.push_pop_dict[segment], i=index)
-        self.file.write(lines)
+        return lines
 
     def pop(self, segment, index):
         """Writes appropriate ASM commands that implement popping to local, argument, this, that, temp or pointer.
@@ -114,7 +134,7 @@ class CodeWriter:
     @13
     A=M
     M=D'''.format(seg=self.push_pop_dict[segment], i=index)
-        self.file.write(lines)
+        return lines
 
     def push_static(self, index):
         """Implements pushing from static segment.
@@ -131,7 +151,7 @@ class CodeWriter:
     // SP++
     @SP
     M=M+1'''.format(label=self.file_name.split('.')[0]+'.'+index)
-        self.file.write(lines)
+        return lines
 
     def pop_static(self, index):
         """Implement popping into static segment.
@@ -144,7 +164,7 @@ class CodeWriter:
     D=M
     @{label}
     M=D'''.format(label=self.file_name.split('.')[0]+'.'+index)
-        self.file.write(lines)
+        return lines
 
     def one_operand(self, op):
         lines = '''@SP
@@ -153,6 +173,7 @@ class CodeWriter:
     M={}M
     @SP
     M=M+1'''.format(self.op_dict[op])
+        return lines
 
     def two_operands(self, op):
         lines = '''@SP
@@ -165,6 +186,7 @@ class CodeWriter:
     M=M{}D
     @SP
     M=M+1'''.format(self.op_dict[op])
+        return lines
 
     def comparison_op(self, op):
         lines = '''@SP
@@ -188,4 +210,8 @@ class CodeWriter:
     M=D
     @SP
     M=M+1'''.format(o=self.comp_index[op], c=CodeWriter.comp_index)
-    comp_index += 1
+        CodeWriter.comp_index += 1
+        return lines
+
+    def close(self):
+        self.file.close()

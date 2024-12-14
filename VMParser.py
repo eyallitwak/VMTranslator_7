@@ -12,7 +12,7 @@ class Parser:
             self.all_commands = [line.strip().split('//')[0]
                                  for line in self.all_commands]
             self.all_commands = [
-                line for line in self.all_commands if line is not None]
+                line for line in self.all_commands if line != '']
 
     def has_more_lines(self):
         """Returns whether or not current file has more lines left to parse.

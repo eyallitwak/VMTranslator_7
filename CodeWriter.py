@@ -17,7 +17,8 @@ class CodeWriter:
                               'argument': 'ARG',
                               'this': 'THIS',
                               'that': 'THAT',
-                              'temp': 5, }
+                              'temp': 5,
+                              'pointer': 3}
         self.op_dict = {'add': '+',
                         'sub': '-',
                         'neg': '-',
@@ -44,13 +45,17 @@ class CodeWriter:
         if command_type == 'C_PUSH':
             if segment == 'constant':
                 asm_command = self.push_constant(index)
-            elif command_type == 'static':
+            elif segment == 'static':
                 asm_command = self.push_static(index)
+            elif segment == 'temp' or segment == 'pointer':
+                asm_command = self.push_temp_pointer(segment, index)
             else:
                 asm_command = self.push(segment, index)
         else:
             if segment == 'static':
                 asm_command = self.pop_static(index)
+            elif segment == 'temp' or segment == 'pointer':
+                asm_command = self.pop_temp_pointer(segment, index)
             else:
                 asm_command = self.pop(segment, index)
         self.file.write(asm_command)
@@ -85,20 +90,17 @@ class CodeWriter:
         return lines
 
     def push(self, segment, index):
-        """Writes appropriate ASM commands that implement pushing from local, argument, this, that, temp or pointer.
+        """Writes appropriate ASM commands that implement pushing from local, argument, this, or that.
 
         Args:
             segment (str): The segment to push from.
             index (int): The offset index in specified segment.
         """
-        if segment == 'pointer':
-            segment = 'THAT' if index == 1 else 'THIS'
-            index = 0
-        lines = '''// D = RAM[{seg} + {i}]
+        lines = '''    // D = RAM[{seg} + {i}]
     @{i}
     D=A
     @{seg}
-    D=D+A
+    D=D+M
     A=D
     D=M
     // RAM[SP] = D
@@ -108,23 +110,20 @@ class CodeWriter:
     // SP++
     @SP
     M=M+1
-    '''.format(seg=self.push_pop_dict[segment], i=index)
+    '''.format(seg=self.push_pop_dict[segment], i=str(index))
         return lines
 
     def pop(self, segment, index):
-        """Writes appropriate ASM commands that implement popping to local, argument, this, that, temp or pointer.
+        """Writes appropriate ASM commands that implement popping to local, argument, this or that.
 
         Args:
             segment (str): The segment to pop into.
             index (int): The offset index in specified segment.
         """
-        if segment == 'pointer':
-            segment = 'THAT' if index == 1 else 'THIS'
-            index = 0
         lines = '''    // RAM[13] = {seg} + {i}
-    @{i}
-    D=A
     @{seg}
+    D=M
+    @{i}
     D=D+A
     @R13
     M=D
@@ -134,7 +133,7 @@ class CodeWriter:
     // RAM[R13] = RAM[SP]
     A=M
     D=M
-    @13
+    @R13
     A=M
     M=D
     '''.format(seg=self.push_pop_dict[segment], i=index)
@@ -155,7 +154,7 @@ class CodeWriter:
     // SP++
     @SP
     M=M+1
-    '''.format(label=self.file_name.split('.')[0]+'.'+index)
+    '''.format(label=self.file_name.split('.')[0]+'.'+str(index))
         return lines
 
     def pop_static(self, index):
@@ -164,7 +163,8 @@ class CodeWriter:
         Args:
             index (int): The offset within the segment to pop into.
         """
-        lines = '''M=M-1
+        lines = '''    @SP
+    M=M-1
     A=M
     D=M
     @{label}
@@ -179,6 +179,32 @@ class CodeWriter:
     @SP
     M=M+1
     '''.format(self.op_dict[op])
+        return lines
+
+    def push_temp_pointer(self, segment, index):
+        lines = '''    // D = RAM[{seg} + {i}]
+    @{i}
+    D=M
+    // RAM[SP] = D
+    @SP
+    A=M
+    M=D
+    // SP++
+    @SP
+    M=M+1
+    '''.format(seg=self.push_pop_dict[segment], i=str(index+self.push_pop_dict[segment]))
+        return lines
+
+    def pop_temp_pointer(self, segment, index):
+        lines = '''    // SP--
+    @SP
+    M=M-1
+    // RAM[{0}] = RAM[SP]
+    A=M
+    D=M
+    @R{0}
+    M=D
+    '''.format(str(self.push_pop_dict[segment]+index))
         return lines
 
     def two_operands(self, op):

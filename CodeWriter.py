@@ -30,6 +30,11 @@ class CodeWriter:
                         'not': '!'}
 
     def write_arithmetic(self, operator):
+        """Writes to output the appropriate arithmetic or logical commands.
+
+        Args:
+            operator (str): The operator of current command
+        """
         asm_command = ''
         if operator == 'neg' or operator == 'not':
             asm_command = self.one_operand(operator)
@@ -38,9 +43,15 @@ class CodeWriter:
         else:
             asm_command = self.two_operands(operator)
         self.file.write(asm_command)
-        pass
 
     def write_push_pop(self, command_type, segment, index):
+        """Writes to output the appropriate push or pop commands.
+
+        Args:
+            command_type (str): C_PUSH or C_POP
+            segment (str): Which segment to push/pop into
+            index (int): Index within segment.
+        """
         asm_command = ''
         if command_type == 'C_PUSH':
             if segment == 'constant':
@@ -173,6 +184,11 @@ class CodeWriter:
         return lines
 
     def one_operand(self, op):
+        """Template for one-operand operation.
+
+        Args:
+            op (str): Which operation to slot.
+        """
         lines = '''    @SP
     M=M-1
     A=M
@@ -183,6 +199,12 @@ class CodeWriter:
         return lines
 
     def push_temp_pointer(self, segment, index):
+        """Push template for pushing from temp and pointer segments.
+
+        Args:
+            segment (str): temp or pointer
+            index (int): Index within segment.
+        """
         lines = '''    // D = RAM[{seg} + {i}]
     @{i}
     D=M
@@ -197,6 +219,12 @@ class CodeWriter:
         return lines
 
     def pop_temp_pointer(self, segment, index):
+        """Pop template for popping into temp and pointer segments.
+
+        Args:
+            segment (str): temp or pointer
+            index (int): Index within segment.
+        """
         lines = '''    // SP--
     @SP
     M=M-1
@@ -209,6 +237,11 @@ class CodeWriter:
         return lines
 
     def two_operands(self, op):
+        """Template for operation with 2 operands.
+
+        Args:
+            op (str): Which operator to slot.
+        """
         lines = '''    @SP
     M=M-1
     A=M
@@ -225,6 +258,11 @@ class CodeWriter:
         return lines
 
     def comparison_op(self, op):
+        """Template for comparison operation.
+
+        Args:
+            op (str): eq, gt, lt.
+        """
         lines = '''    @SP
     M=M-1
     A=M
@@ -251,4 +289,6 @@ class CodeWriter:
         return lines
 
     def close(self):
+        """Closes this instance's output stream, effectively ending the usability of this instance.
+        """
         self.file.close()

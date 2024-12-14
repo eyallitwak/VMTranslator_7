@@ -3,6 +3,11 @@ import CodeWriter
 
 
 def translate(vm_file):
+    """Drives the translation proccess of a single .vm file.
+
+    Args:
+        vm_file (str): Path (either  relative or absolute) of the .vm file to be translated.
+    """
     parser = VMParser.Parser(vm_file)
     writer = CodeWriter.CodeWriter(vm_file)
 

@@ -1,6 +1,12 @@
 class Parser:
 
     def __init__(self, source_file):
+        """Initializes a parser that reads the given .vm file.\n
+        Each file requires a new parser.
+
+        Args:
+            source_file (str): Path (either relative or absolute) of the .vm file to be translated.
+        """
         self.current_command = ''  # initially there is no current command
         self.command_index = 0
         self.all_commands = []

@@ -4,13 +4,13 @@ import os
 class CodeWriter:
     comp_index = 0  # index to label comparison operations, since they need labeling
 
-    def __init__(self, dest_file):
+    def __init__(self, vm_file):
         """Creates a CodeWriter object, that will write to the specified file.
 
         Args:
             dest_file (path): Path to create the output file.
         """
-        self.path = dest_file.split('.')[0]+'.asm'
+        self.path = vm_file.split('.')[0]+'.asm'
         self.file = open(self.path, 'w+')
         self.file_name = os.path.basename(self.path)
         self.push_pop_dict = {'local': 'LCL',

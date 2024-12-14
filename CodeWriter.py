@@ -62,6 +62,7 @@ class CodeWriter:
             command: Current VM command.
         """
         line = '// '+str(command)+'\n'
+        self.file.write('\n')
         self.file.write(line)
 
     def push_constant(self, index):
@@ -70,7 +71,7 @@ class CodeWriter:
         Args:
             index (int): The constant value to push.
         """
-        lines = '''// D = {n}
+        lines = '''    // D = {n}
     @{n}
     D=A
     // RAM[SP] = D
@@ -79,7 +80,8 @@ class CodeWriter:
     M=D
     // SP++
     @SP
-    M=M+1\n'''.format(n=index)
+    M=M+1
+    '''.format(n=index)
         return lines
 
     def push(self, segment, index):
@@ -105,7 +107,8 @@ class CodeWriter:
     M=D
     // SP++
     @SP
-    M=M+1'''.format(seg=self.push_pop_dict[segment], i=index)
+    M=M+1
+    '''.format(seg=self.push_pop_dict[segment], i=index)
         return lines
 
     def pop(self, segment, index):
@@ -118,7 +121,7 @@ class CodeWriter:
         if segment == 'pointer':
             segment = 'THAT' if index == 1 else 'THIS'
             index = 0
-        lines = '''// RAM[13] = {seg} + {i}
+        lines = '''    // RAM[13] = {seg} + {i}
     @{i}
     D=A
     @{seg}
@@ -133,7 +136,8 @@ class CodeWriter:
     D=M
     @13
     A=M
-    M=D'''.format(seg=self.push_pop_dict[segment], i=index)
+    M=D
+    '''.format(seg=self.push_pop_dict[segment], i=index)
         return lines
 
     def push_static(self, index):
@@ -150,7 +154,8 @@ class CodeWriter:
     M=D
     // SP++
     @SP
-    M=M+1'''.format(label=self.file_name.split('.')[0]+'.'+index)
+    M=M+1
+    '''.format(label=self.file_name.split('.')[0]+'.'+index)
         return lines
 
     def pop_static(self, index):
@@ -167,29 +172,33 @@ class CodeWriter:
         return lines
 
     def one_operand(self, op):
-        lines = '''@SP
+        lines = '''    @SP
     M=M-1
     A=M
     M={}M
     @SP
-    M=M+1'''.format(self.op_dict[op])
+    M=M+1
+    '''.format(self.op_dict[op])
         return lines
 
     def two_operands(self, op):
-        lines = '''@SP
+        lines = '''    @SP
     M=M-1
     A=M
     D=M
     @SP
     M=M-1
     A=M
-    M=M{}D
+    M=D{}M
     @SP
-    M=M+1'''.format(self.op_dict[op])
+    M=M+1
+    '''.format(self.op_dict[op])
+        if 'D-M' in lines:
+            lines = lines.replace('D-M', 'M-D')
         return lines
 
     def comparison_op(self, op):
-        lines = '''@SP
+        lines = '''    @SP
     M=M-1
     A=M
     D=M
@@ -202,14 +211,15 @@ class CodeWriter:
     D=0
     @FINISHCOMP{c}
     0;JMP
-    (TRUE{c})
+(TRUE{c})
     D=-1
-    (FINISHCOMP{c})
+(FINISHCOMP{c})
     @SP
     A=M
     M=D
     @SP
-    M=M+1'''.format(o=self.comp_index[op], c=CodeWriter.comp_index)
+    M=M+1
+    '''.format(o=self.op_dict[op], c=CodeWriter.comp_index)
         CodeWriter.comp_index += 1
         return lines
 

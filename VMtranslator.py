@@ -8,6 +8,7 @@ def translate(vm_file):
 
     while parser.has_more_lines():
         parser.advance()
+        writer.comment(parser.current_command)
         if parser.command_type() == 'C_ARITHMETIC':
             writer.write_arithmetic(parser.arg1())
         else:

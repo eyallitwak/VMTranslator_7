@@ -32,7 +32,8 @@ def main():
         files = [os.path.join(file_name, f)
                  for f in files if os.path.splitext(f)[1] == '.vm']
 
-        raw_name = os.path.dirname(file_name)[2:]
+        raw_name = os.path.dirname(file_name)[2:] if os.path.dirname(
+            file_name)[:2] in ['./', '.\\'] else os.path.dirname(file_name)
         output = os.path.join(os.path.abspath(file_name), raw_name + '.vm')
         # If output file exists, overwrite it (as CodeWriter uses append)
         if os.path.isfile(output[:-2] + 'asm'):

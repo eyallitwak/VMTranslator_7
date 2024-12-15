@@ -19,7 +19,12 @@ def main():
             print("Error: input file should have the extension \".vm\"")
             sys.exit()
 
-        VMtranslator.translate(file_name)
+        # If output file exists, overwrite it (as CodeWriter uses append)
+        if os.path.isfile(os.path.abspath(file_name)[:-2]+'asm'):
+            os.remove(os.path.abspath(file_name)[:-2]+'asm')
+
+        VMtranslator.translate(file_name, file_name)
+        print("Translation completed!")
 
     # When receiving a directory of .vm files as input
     elif os.path.isdir(file_name):
@@ -27,8 +32,15 @@ def main():
         files = [os.path.join(file_name, f)
                  for f in files if os.path.splitext(f)[1] == '.vm']
 
+        raw_name = os.path.dirname(file_name)[2:]
+        output = os.path.join(os.path.abspath(file_name), raw_name + '.vm')
+        # If output file exists, overwrite it (as CodeWriter uses append)
+        if os.path.isfile(output[:-2] + 'asm'):
+            os.remove(output[:-2] + 'asm')
+
         for f in files:
-            VMtranslator.translate(f)
+            VMtranslator.translate(f, output)
+        print("Translation completed!")
 
     # Terminate if given input is not an existing file or directory
     else:

@@ -2,14 +2,15 @@ import VMParser
 import CodeWriter
 
 
-def translate(vm_file):
+def translate(vm_input, asm_output):
     """Drives the translation proccess of a single .vm file.
 
     Args:
-        vm_file (str): Path (either  relative or absolute) of the .vm file to be translated.
+        vm_input (str): Path (either  relative or absolute) of the .vm file to be translated.
+        asm_output (str) : Path of the output .asm file to be created.
     """
-    parser = VMParser.Parser(vm_file)
-    writer = CodeWriter.CodeWriter(vm_file)
+    parser = VMParser.Parser(vm_input)
+    writer = CodeWriter.CodeWriter(asm_output)
 
     while parser.has_more_lines():
         parser.advance()

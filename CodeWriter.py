@@ -11,7 +11,7 @@ class CodeWriter:
             dest_file (path): Path to create the output file.
         """
         self.path = os.path.abspath(vm_file)[:-2]+'asm'
-        self.file = open(self.path, 'w+')
+        self.file = open(self.path, 'a+')
         self.file_name = os.path.basename(self.path)
         self.push_pop_dict = {'local': 'LCL',
                               'argument': 'ARG',
